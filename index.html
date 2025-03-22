@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clique Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>CS F364 Design and Analysis of Algorithms Assignment-1</h1>
+    <h2>Group 25</h2>
+    <p>
+        <li>Adit Rastogi 2022A7PS1330H</li>
+        <li>Karandeep Singh Sodhi 2022A7PS1383H</li>
+        <li>Harshita 2022A7PS1353H</li>
+        <li>Priyanshu Tripathi 2022A7PS1798H</li>
+    </p>
+    
+    <h2>Email-Enron Dataset</h2>
+    <p><strong>Nodes:</strong> 36692</p>
+    <p><strong>Edges:</strong> 367662</p>
+    <p><strong>Cliques Found:</strong> 226859</p>
+    <p><strong>Max Clique Size:</strong> 20</p>
+    <p><strong>Time Taken:</strong> 
+        <li><strong>Tomita06:</strong> 86.0831 seconds</li>
+        <li><strong>ELS:</strong> 3.76763 seconds</li>
+        <li><strong>Chiba:</strong> xxx seconds</li>
+    </p>
+    
+    <table>
+        <tr>
+            <th>Clique Size</th>
+            <th>Frequency</th>
+        </tr>
+        <tr><td>2</td><td>14070</td></tr>
+        <tr><td>3</td><td>7077</td></tr>
+        <tr><td>4</td><td>13319</td></tr>
+        <tr><td>5</td><td>18143</td></tr>
+        <tr><td>6</td><td>22715</td></tr>
+        <tr><td>7</td><td>25896</td></tr>
+        <tr><td>8</td><td>24766</td></tr>
+        <tr><td>9</td><td>22884</td></tr>
+        <tr><td>10</td><td>21393</td></tr>
+        <tr><td>11</td><td>17833</td></tr>
+        <tr><td>12</td><td>15181</td></tr>
+        <tr><td>13</td><td>11487</td></tr>
+        <tr><td>14</td><td>7417</td></tr>
+        <tr><td>15</td><td>3157</td></tr>
+        <tr><td>16</td><td>1178</td></tr>
+        <tr><td>17</td><td>286</td></tr>
+        <tr><td>18</td><td>41</td></tr>
+        <tr><td>19</td><td>10</td></tr>
+        <tr><td>20</td><td>6</td></tr>
+    </table>
+    <img src="./data/email.jpg" alt="Description of image">
+    
+    <h2>Wikipedia Vote Dataset</h2>
+    <p><strong>Nodes:</strong> 8298</p>
+    <p><strong>Edges:</strong> 103689</p>
+    <p><strong>Cliques Found:</strong> 460185</p>
+    <p><strong>Max Clique Size:</strong> 17</p>
+    <p><strong>Time Taken:</strong> 
+        <li><strong>Tomita06:</strong> 49.7241 seconds</li>
+        <li><strong>ELS:</strong> 5.04143 seconds</li>
+        <li><strong>Chiba:</strong> xxx seconds</li>
+    </p>
+
+    
+    <table>
+        <tr>
+            <th>Clique Size</th>
+            <th>Frequency</th>
+        </tr>
+        <tr><td>1</td><td>1183</td></tr>
+        <tr><td>2</td><td>8655</td></tr>
+        <tr><td>3</td><td>13718</td></tr>
+        <tr><td>4</td><td>27292</td></tr>
+        <tr><td>5</td><td>48416</td></tr>
+        <tr><td>6</td><td>68872</td></tr>
+        <tr><td>7</td><td>83266</td></tr>
+        <tr><td>8</td><td>76732</td></tr>
+        <tr><td>9</td><td>54456</td></tr>
+        <tr><td>10</td><td>35470</td></tr>
+        <tr><td>11</td><td>21736</td></tr>
+        <tr><td>12</td><td>11640</td></tr>
+        <tr><td>13</td><td>5449</td></tr>
+        <tr><td>14</td><td>2329</td></tr>
+        <tr><td>15</td><td>740</td></tr>
+        <tr><td>16</td><td>208</td></tr>
+        <tr><td>17</td><td>23</td></tr>
+    </table>
+    <img src="./data/wiki.jpg" alt="Description of image">
+
+    <h2>Internet Topology Skitter Dataset</h2>
+    <p><strong>Nodes:</strong> 1696415</p>
+    <p><strong>Edges:</strong> 11095298</p>
+    <p><strong>Cliques Found:</strong> 37322355</p>
+    <p><strong>Max Clique Size:</strong> 67</p>
+    <p><strong>Time Taken:</strong> 
+        <li><strong>Tomita06:</strong> 89483.2 seconds (~1 day 51 minutes)</li>
+        <li><strong>ELS:</strong> xxx seconds</li>
+        <li><strong>Chiba:</strong> xxx seconds</li>
+    </p>
+    
+    <table>
+        <tr>
+            <th>Clique Size</th>
+            <th>Frequency</th>
+        </tr>
+            <tr><td>2</td><td>2319807</td></tr>
+            <tr><td>3</td><td>3171609</td></tr>
+            <tr><td>4</td><td>1823321</td></tr>
+            <tr><td>5</td><td>939336</td></tr>
+            <tr><td>6</td><td>684873</td></tr>
+            <tr><td>7</td><td>598284</td></tr>
+            <tr><td>8</td><td>588889</td></tr>
+            <tr><td>9</td><td>608937</td></tr>
+            <tr><td>10</td><td>	665661</td></tr>
+            <tr><td>11</td><td>	728098</td></tr>
+            <tr><td>12</td><td>	798073</td></tr>
+            <tr><td>13</td><td>	877282</td></tr>
+            <tr><td>14</td><td>	945194</td></tr>
+            <tr><td>15</td><td>	980831</td></tr>
+            <tr><td>16</td><td>	939987</td></tr>
+            <tr><td>17</td><td>	839330</td></tr>
+            <tr><td>18</td><td>	729601</td></tr>
+            <tr><td>19</td><td>	639413</td></tr>
+            <tr><td>20</td><td>	600192</td></tr>
+            <tr><td>21</td><td>	611976</td></tr>
+            <tr><td>22</td><td>	640890</td></tr>
+            <tr><td>23</td><td>	673924</td></tr>
+            <tr><td>24</td><td>	706753</td></tr>
+            <tr><td>25</td><td>	753633</td></tr>
+            <tr><td>26</td><td>	818353</td></tr>
+            <tr><td>27</td><td>	892719</td></tr>
+            <tr><td>28</td><td>	955212</td></tr>
+            <tr><td>29</td><td>	999860</td></tr>
+            <tr><td>30</td><td>	1034106</td></tr>
+            <tr><td>31</td><td>	1055653</td></tr>
+            <tr><td>32</td><td>	1017560</td></tr>
+            <tr><td>33</td><td>	946717</td></tr>
+            <tr><td>34</td><td>	878552</td></tr>
+            <tr><td>35</td><td>	809485</td></tr>
+            <tr><td>36</td><td>	744634</td></tr>
+            <tr><td>37</td><td>	663650</td></tr>
+            <tr><td>38</td><td>	583922</td></tr>
+            <tr><td>39</td><td>	520239</td></tr>
+            <tr><td>40</td><td>	474301</td></tr>
+            <tr><td>41</td><td>	420796</td></tr>
+            <tr><td>42</td><td>	367879</td></tr>
+            <tr><td>43</td><td>	321829</td></tr>
+            <tr><td>44</td><td>	275995</td></tr>
+            <tr><td>45</td><td>	222461</td></tr>
+            <tr><td>46</td><td>	158352</td></tr>
+            <tr><td>47</td><td>	99522</td></tr>
+            <tr><td>48</td><td>	62437</td></tr>
+            <tr><td>49</td><td>	39822</td></tr>
+            <tr><td>50</td><td>	30011</td></tr>
+            <tr><td>51</td><td>	25637</td></tr>
+            <tr><td>52</td><td>	17707</td></tr>
+            <tr><td>53</td><td>	9514</td></tr>
+            <tr><td>54</td><td>	3737</td></tr>
+            <tr><td>55</td><td>	2042</td></tr>
+            <tr><td>56</td><td>	1080</td></tr>
+            <tr><td>57</td><td>	546</td></tr>
+            <tr><td>58</td><td>	449</td></tr>
+            <tr><td>59</td><td>	447</td></tr>
+            <tr><td>60</td><td>	405</td></tr>
+            <tr><td>61</td><td>	283</td></tr>
+            <tr><td>62</td><td>	242</td></tr>
+            <tr><td>63</td><td>	146</td></tr>
+            <tr><td>64</td><td>	84</td></tr>
+            <tr><td>65</td><td>	49</td></tr>
+            <tr><td>66</td><td>	22</td></tr>
+            <tr><td>67</td><td>	4</td></tr>
+    </table>
+    <img src="./data/skitter.jpg" alt="Description of image">
+</body>
+</html>
