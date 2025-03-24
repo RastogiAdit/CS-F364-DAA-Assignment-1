@@ -321,6 +321,670 @@
                 </div>
             </div>
         </div>
+        <!-- simulation -->
+    <div class="clique-simulation">
+        <style>
+        .clique-simulation {
+            --primary-color: #2b2c2c;
+            --secondary-color: #000000;
+            --accent-color: #2980b9;
+            --background-gradient: rgba(255, 255, 255, 0.9);;
+            --panel-background: rgba(255, 255, 255, 0);
+            --info-panel-background: rgba(255, 255, 255, 0.9);
+            --info-background: rgba(236, 240, 241, 0);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --spacing: 15px;
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            margin: 20px auto;
+            background: var(--background-gradient);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .clique-simulation .header {
+            text-align: center;
+            padding: 10px var(--spacing);
+            background: var(--panel-background);
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+        .clique-simulation .title {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+        .clique-simulation .subtitle {
+            color: var(--secondary-color);
+            margin: 5px 0 0;
+            font-size: 14px;
+        }
+        .clique-simulation .container {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+        }
+        .clique-simulation .canvas-container {
+            flex: 3;
+            position: relative;
+            overflow: hidden;
+        }
+        .clique-simulation #graphCanvas {
+            display: block;
+        }
+        .clique-simulation .info-panel {
+            flex: 1;
+            padding: var(--spacing);
+            background: var(--info-panel-background);
+            box-shadow: -2px 0 10px var(--shadow-color);
+            overflow-y:visible;
+            max-width: 300px;
+            font-size: 14px;
+        }
+        .clique-simulation .info-panel > * + * {
+            margin-top: 15px;
+        }
+        .clique-simulation .info-panel h2 {
+            font-size: 18px;
+            margin: 0 0 10px 0;
+        }
+        .clique-simulation .info-panel h3 {
+            font-size: 16px;
+            margin: 0 0 8px 0;
+        }
+        .clique-simulation .info-section {
+            padding: 12px;
+            background: var(--info-background);
+            border-radius: var(--border-radius);
+        }
+        .clique-simulation .stat-value {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        .clique-simulation .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .clique-simulation .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .clique-simulation .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        .clique-simulation .footer {
+            text-align: center;
+            padding: 6px;
+            background: var(--panel-background);
+            color: var(--secondary-color);
+            font-size: 12px;
+        }
+        @media (max-width: 768px) {
+            .clique-simulation .container {
+            flex-direction: column;
+            }
+            .clique-simulation .info-panel {
+            max-width: none;
+            }
+        }
+        </style>
+        <div class="header">
+        <h1 class="title">Dynamic Maximal Clique Simulation</h1>
+        <p class="subtitle">Hover over nodes to explore cliques</p>
+        </div>
+        <div class="container">
+        <div class="canvas-container">
+            <canvas id="graphCanvas"></canvas>
+        </div>
+        <div class="info-panel">
+            <div class="info-section"></div>
+            <div class="stats info-section">
+            <h3>Graph Statistics</h3>
+            <p>Nodes: <span id="nodeCount" class="stat-value">0</span></p>
+            <p>Edges: <span id="edgeCount" class="stat-value">0</span></p>
+            <p>Maximum Clique Size: <span id="maxCliqueSize" class="stat-value">0</span></p>
+            </div>
+            <div class="clique-info info-section">
+            <h3>Active Cliques</h3>
+            <div id="cliqueList"></div>
+            </div>
+            
+        </div>
+        </div>
+        
+        <script>
+        (function() {
+            // Graph and canvas configuration
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let pixelRatio = window.devicePixelRatio || 1;
+    
+            // Graph data
+            const nodes = [];
+            const edges = [];
+            let maximalCliques = [];
+            let maximumClique = [];
+            let selectedNode = null;
+            let lastInteraction = Date.now();
+    
+            // Visualization parameters
+            const nodeRadius = 12;
+            const regularNodeColor = '#3498db';
+            const highlightedNodeColor = '#e74c3c';
+            const maximalCliqueColor = '#27ae60';
+            const maximumCliqueColor = '#f39c12';
+            const edgeColor = 'rgba(149, 165, 166, 0.6)';
+            const highlightedEdgeColor = '#2c3e50';
+    
+            // Animation parameters
+            let animationFrameId;
+            const springLength = 120;
+            const springStiffness = 0.02;
+            const repulsionStrength = 400;
+            const centerAttraction = 0.00001;
+            const damping = 0.1;
+    
+            // Grid-based optimization
+            const grid = {};
+            const cellSize = nodeRadius * 4;
+    
+            // Performance optimization
+            const useRequestIdleCallback = typeof window.requestIdleCallback !== 'undefined';
+            let lastForceCalculation = 0;
+            const forceCalculationInterval = 16; // ms
+    
+            function init() {
+            resizeCanvas();
+            window.addEventListener('resize', debounce(resizeCanvas, 250));
+            createRandomGraph(12, 0.35);
+            runInitialLayout();
+            findMaximalCliques();
+            updateStats();
+            animate();
+            setupInteractions();
+            setupDynamicGraphChanges();
+            setupPeriodicGraphReset();
+            }
+    
+            function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this, args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+            }
+    
+            function resizeCanvas() {
+            pixelRatio = window.devicePixelRatio || 1;
+            const container = canvas.parentElement;
+            width = container.clientWidth;
+            height = container.clientHeight;
+            canvas.width = width * pixelRatio;
+            canvas.height = height * pixelRatio;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(pixelRatio, pixelRatio);
+    
+            if (nodes.length > 0) {
+                const centerX = width / 2;
+                const centerY = height / 2;
+                nodes.forEach(node => {
+                if (!node.x || !node.y) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.min(width, height) * 0.3 * Math.random();
+                    node.x = centerX + Math.cos(angle) * radius;
+                    node.y = centerY + Math.sin(angle) * radius;
+                } else {
+                    node.x = Math.max(nodeRadius, Math.min(width - nodeRadius, node.x));
+                    node.y = Math.max(nodeRadius, Math.min(height - nodeRadius, node.y));
+                }
+                });
+            }
+            }
+    
+            function createRandomGraph(n, p) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) * 0.3;
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * Math.PI * 2;
+                nodes.push({
+                id: i,
+                x: centerX + Math.cos(angle) * radius * (0.8 + Math.random() * 0.4),
+                y: centerY + Math.sin(angle) * radius * (0.8 + Math.random() * 0.4),
+                vx: 0,
+                vy: 0,
+                fx: 0,
+                fy: 0
+                });
+            }
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                if (Math.random() < p) edges.push({source: i, target: j});
+                }
+            }
+            }
+    
+            function runInitialLayout() {
+            const iterations = 100;
+            const tempSpringStiffness = 0.05;
+            const tempRepulsionStrength = 1000;
+            for (let iter = 0; iter < iterations; iter++) {
+                nodes.forEach(node => { node.fx = 0; node.fy = 0; });
+                edges.forEach(edge => {
+                const source = nodes[edge.source];
+                const target = nodes[edge.target];
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance === 0) return;
+                const force = tempSpringStiffness * (distance - springLength);
+                const forceX = force * dx / distance;
+                const forceY = force * dy / distance;
+                source.fx += forceX; source.fy += forceY;
+                target.fx -= forceX; target.fy -= forceY;
+                });
+                for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const nodeA = nodes[i];
+                    const nodeB = nodes[j];
+                    const dx = nodeB.x - nodeA.x;
+                    const dy = nodeB.y - nodeA.y;
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < 1) continue;
+                    const force = tempRepulsionStrength / distSq;
+                    const forceX = force * dx / Math.sqrt(distSq);
+                    const forceY = force * dy / Math.sqrt(distSq);
+                    nodeA.fx -= forceX; nodeA.fy -= forceY;
+                    nodeB.fx += forceX; nodeB.fy += forceY;
+                }
+                }
+                const centerX = width / 2;
+                const centerY = height / 2;
+                nodes.forEach(node => {
+                node.fx += (centerX - node.x) * centerAttraction * 2;
+                node.fy += (centerY - node.y) * centerAttraction * 2;
+                });
+                const factor = 1 - (iter / iterations);
+                nodes.forEach(node => {
+                node.x += node.fx * factor;
+                node.y += node.fy * factor;
+                node.x = Math.max(nodeRadius, Math.min(width - nodeRadius, node.x));
+                node.y = Math.max(nodeRadius, Math.min(height - nodeRadius, node.y));
+                });
+            }
+            nodes.forEach(node => { node.vx = 0; node.vy = 0; });
+            }
+    
+            function findMaximalCliques() {
+            const adjacencyList = buildAdjacencyList();
+            maximalCliques = bronKerbosch([], [...Array(nodes.length).keys()], [], adjacencyList);
+            if (maximalCliques.length > 0) {
+                maximumClique = maximalCliques.reduce((max, current) => 
+                current.length > max.length ? current : max, maximalCliques[0]);
+            }
+            }
+    
+            function buildAdjacencyList() {
+            const adjList = Array(nodes.length).fill().map(() => []);
+            edges.forEach(edge => {
+                adjList[edge.source].push(edge.target);
+                adjList[edge.target].push(edge.source);
+            });
+            return adjList;
+            }
+    
+            function bronKerbosch(R, P, X, adjList) {
+            const result = [];
+            if (P.length === 0 && X.length === 0) {
+                result.push([...R]);
+                return result;
+            }
+            let pivot = null;
+            let maxConnections = -1;
+            for (const v of [...P, ...X]) {
+                const connections = adjList[v].filter(n => P.includes(n)).length;
+                if (connections > maxConnections) {
+                pivot = v;
+                maxConnections = connections;
+                }
+            }
+            const pCopy = [...P];
+            const pivotNeighbors = pivot !== null ? new Set(adjList[pivot]) : new Set();
+            for (const v of pCopy) {
+                if (pivot === null || !pivotNeighbors.has(v)) {
+                const newR = [...R, v];
+                const vNeighbors = new Set(adjList[v]);
+                const newP = P.filter(n => vNeighbors.has(n));
+                const newX = X.filter(n => vNeighbors.has(n));
+                result.push(...bronKerbosch(newR, newP, newX, adjList));
+                P = P.filter(n => n !== v);
+                X.push(v);
+                }
+            }
+            return result;
+            }
+    
+            function updateStats() {
+            document.getElementById('nodeCount').textContent = nodes.length;
+            document.getElementById('edgeCount').textContent = edges.length;
+            document.getElementById('maxCliqueSize').textContent = maximumClique.length;
+            const cliqueList = document.getElementById('cliqueList');
+            cliqueList.innerHTML = '';
+            if (selectedNode !== null) {
+                const cliquesWithNode = maximalCliques.filter(clique => clique.includes(selectedNode));
+                if (cliquesWithNode.length > 0) {
+                cliquesWithNode.forEach((clique, index) => {
+                    const isMaximum = clique.length === maximumClique.length;
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                    <p><strong>${isMaximum ? 'Maximum' : 'Maximal'} Clique ${index + 1}:</strong> 
+                    Nodes ${clique.map(n => n + 1).join(', ')} (Size: ${clique.length})</p>
+                    `;
+                    cliqueList.appendChild(div);
+                });
+                } else {
+                cliqueList.innerHTML = '<p>Selected node is not part of any maximal clique.</p>';
+                }
+            } else {
+                const sortedCliques = [...maximalCliques].sort((a, b) => b.length - a.length);
+                const topCliques = sortedCliques.slice(0, 3);
+                if (topCliques.length > 0) {
+                topCliques.forEach((clique, index) => {
+                    const isMaximum = clique.length === maximumClique.length;
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                    <p><strong>${isMaximum ? 'Maximum' : 'Maximal'} Clique ${index + 1}:</strong> 
+                    Nodes ${clique.map(n => n + 1).join(', ')} (Size: ${clique.length})</p>
+                    `;
+                    cliqueList.appendChild(div);
+                });
+                if (maximalCliques.length > 3) {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<p>...and ${maximalCliques.length - 3} more maximal cliques.</p>`;
+                    cliqueList.appendChild(div);
+                }
+                } else {
+                cliqueList.innerHTML = '<p>No maximal cliques found in this graph.</p>';
+                }
+            }
+            }
+    
+            function updateSpatialGrid() {
+            for (const key in grid) delete grid[key];
+            nodes.forEach((node, i) => {
+                const cellX = Math.floor(node.x / cellSize);
+                const cellY = Math.floor(node.y / cellSize);
+                const key = `${cellX},${cellY}`;
+                if (!grid[key]) grid[key] = [];
+                grid[key].push(i);
+            });
+            }
+    
+            function getNearbyNodes(nodeIndex) {
+            const node = nodes[nodeIndex];
+            const cellX = Math.floor(node.x / cellSize);
+            const cellY = Math.floor(node.y / cellSize);
+            const nearbyIndices = new Set();
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                const key = `${cellX + dx},${cellY + dy}`;
+                if (grid[key]) grid[key].forEach(idx => { if (idx !== nodeIndex) nearbyIndices.add(idx); });
+                }
+            }
+            return Array.from(nearbyIndices);
+            }
+    
+            function animate() {
+            const now = Date.now();
+            const timeSinceLastCalculation = now - lastForceCalculation;
+            const timeSinceLastInteraction = now - lastInteraction;
+            if (timeSinceLastCalculation >= forceCalculationInterval && 
+                (timeSinceLastInteraction < 2000 || timeSinceLastCalculation >= 60)) {
+                applyForces();
+                lastForceCalculation = now;
+            }
+            ctx.clearRect(0, 0, width, height);
+            drawEdges();
+            drawNodes();
+            animationFrameId = requestAnimationFrame(animate);
+            }
+    
+            function applyForces() {
+            updateSpatialGrid();
+            nodes.forEach(node => { node.fx = 0; node.fy = 0; });
+            edges.forEach(edge => {
+                const source = nodes[edge.source];
+                const target = nodes[edge.target];
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 0.01) return;
+                const force = springStiffness * (distance - springLength);
+                const forceX = force * dx / distance;
+                const forceY = force * dy / distance;
+                source.fx += forceX; source.fy += forceY;
+                target.fx -= forceX; target.fy -= forceY;
+            });
+            nodes.forEach((nodeA, i) => {
+                const nearbyIndices = getNearbyNodes(i);
+                nearbyIndices.forEach(j => {
+                const nodeB = nodes[j];
+                const dx = nodeB.x - nodeA.x;
+                const dy = nodeB.y - nodeA.y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq < 1) return;
+                const force = repulsionStrength / distSq;
+                const dist = Math.sqrt(distSq);
+                const forceX = force * dx / dist;
+                const forceY = force * dy / dist;
+                nodeA.fx -= forceX; nodeA.fy -= forceY;
+                nodeB.fx += forceX; nodeB.fy += forceY;
+                });
+            });
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const maxDistance = Math.min(width, height) * 0.4;
+            nodes.forEach(node => {
+                const dx = centerX - node.x;
+                const dy = centerY - node.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance > maxDistance) {
+                const factor = (distance / maxDistance) * centerAttraction;
+                node.fx += dx * factor;
+                node.fy += dy * factor;
+                } else {
+                node.fx += dx * centerAttraction;
+                node.fy += dy * centerAttraction;
+                }
+            });
+            nodes.forEach(node => {
+                node.vx = (node.vx + node.fx) * damping;
+                node.vy = (node.vy + node.fy) * damping;
+                if (Math.abs(node.vx) < 0.01) node.vx = 0;
+                if (Math.abs(node.vy) < 0.01) node.vy = 0;
+                node.x += node.vx;
+                node.y += node.vy;
+                if (node.x < nodeRadius) { node.x = nodeRadius; node.vx *= -0.5; }
+                if (node.x > width - nodeRadius) { node.x = width - nodeRadius; node.vx *= -0.5; }
+                if (node.y < nodeRadius) { node.y = nodeRadius; node.vy *= -0.5; }
+                if (node.y > height - nodeRadius) { node.y = height - nodeRadius; node.vy *= -0.5; }
+            });
+            }
+    
+            function drawEdges() {
+            const regularEdges = [];
+            const highlightedEdges = [];
+            edges.forEach(edge => {
+                const source = nodes[edge.source];
+                const target = nodes[edge.target];
+                let isHighlighted = false;
+                if (selectedNode !== null) {
+                isHighlighted = (edge.source === selectedNode || edge.target === selectedNode);
+                if (!isHighlighted) {
+                    for (const clique of maximalCliques) {
+                    if (clique.includes(selectedNode) && clique.includes(edge.source) && clique.includes(edge.target)) {
+                        isHighlighted = true;
+                        break;
+                    }
+                    }
+                }
+                }
+                if (isHighlighted) highlightedEdges.push({source, target});
+                else regularEdges.push({source, target});
+            });
+            ctx.beginPath();
+            ctx.strokeStyle = edgeColor;
+            ctx.lineWidth = 1;
+            regularEdges.forEach(edge => {
+                ctx.moveTo(edge.source.x, edge.source.y);
+                ctx.lineTo(edge.target.x, edge.target.y);
+            });
+            ctx.stroke();
+            if (highlightedEdges.length > 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = highlightedEdgeColor;
+                ctx.lineWidth = 2;
+                highlightedEdges.forEach(edge => {
+                ctx.moveTo(edge.source.x, edge.source.y);
+                ctx.lineTo(edge.target.x, edge.target.y);
+                });
+                ctx.stroke();
+            }
+            }
+    
+            function drawNodes() {
+            nodes.forEach((node, index) => {
+                let color = regularNodeColor;
+                if (selectedNode === index) {
+                color = highlightedNodeColor;
+                } else if (selectedNode !== null) {
+                let isInCliqueWithSelected = false;
+                let isInMaximumCliqueWithSelected = false;
+                for (const clique of maximalCliques) {
+                    if (clique.includes(selectedNode) && clique.includes(index)) {
+                    isInCliqueWithSelected = true;
+                    if (clique.length === maximumClique.length) {
+                        isInMaximumCliqueWithSelected = true;
+                        break;
+                    }
+                    }
+                }
+                if (isInMaximumCliqueWithSelected) color = maximumCliqueColor;
+                else if (isInCliqueWithSelected) color = maximalCliqueColor;
+                } else {
+                if (maximumClique.includes(index)) color = maximumCliqueColor;
+                }
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText((index + 1).toString(), node.x, node.y);
+            });
+            }
+    
+            function setupInteractions() {
+            canvas.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                let hoveredNode = null;
+                nodes.forEach((node, index) => {
+                const dx = mouseX - node.x;
+                const dy = mouseY - node.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance <= nodeRadius) hoveredNode = index;
+                });
+                if (selectedNode !== hoveredNode) {
+                selectedNode = hoveredNode;
+                updateStats();
+                }
+                lastInteraction = Date.now();
+            });
+            let autoSelectTimeout;
+            function resetAutoSelectTimer() {
+                clearTimeout(autoSelectTimeout);
+                autoSelectTimeout = setTimeout(startAutoSelect, 5000);
+            }
+            function startAutoSelect() {
+                autoSelectNode();
+                autoSelectTimeout = setTimeout(startAutoSelect, 3000);
+            }
+            function autoSelectNode() {
+                selectedNode = Math.floor(Math.random() * nodes.length);
+                updateStats();
+            }
+            canvas.addEventListener('mousemove', resetAutoSelectTimer);
+            resetAutoSelectTimer();
+            }
+    
+            function setupDynamicGraphChanges() {
+            setInterval(() => {
+                const changeType = Math.random();
+                if (changeType < 0.3 && nodes.length < 20) {
+                const newNodeId = nodes.length;
+                nodes.push({
+                    id: newNodeId,
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: 0,
+                    vy: 0
+                });
+                for (let i = 0; i < nodes.length - 1; i++) {
+                    if (Math.random() < 0.3) edges.push({source: i, target: newNodeId});
+                }
+                } else if (changeType < 0.6 && edges.length > nodes.length) {
+                const edgeIndex = Math.floor(Math.random() * edges.length);
+                edges.splice(edgeIndex, 1);
+                } else {
+                const nodeA = Math.floor(Math.random() * nodes.length);
+                const nodeB = Math.floor(Math.random() * nodes.length);
+                if (nodeA !== nodeB) {
+                    const edgeExists = edges.some(edge => 
+                    (edge.source === nodeA && edge.target === nodeB) || 
+                    (edge.source === nodeB && edge.target === nodeA));
+                    if (!edgeExists) edges.push({source: nodeA, target: nodeB});
+                }
+                }
+                findMaximalCliques();
+                updateStats();
+            }, 5000);
+            }
+    
+            function setupPeriodicGraphReset() {
+            setInterval(() => {
+                nodes.length = 0;
+                edges.length = 0;
+                const nodeCount = 10 + Math.floor(Math.random() * 10);
+                const edgeProbability = 0.3 + Math.random() * 0.3;
+                createRandomGraph(nodeCount, edgeProbability);
+                findMaximalCliques();
+                updateStats();
+                selectedNode = null;
+            }, 45000);
+            }
+    
+            init();
+        })();
+        </script>
+    </div>
         
         <div class="dataset-nav">
             <a href="#email" class="nav-link"><i class="fas fa-envelope"></i> Email-Enron</a>
